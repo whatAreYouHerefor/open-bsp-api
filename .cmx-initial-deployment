@@ -1,0 +1,3 @@
+CMX initial deployment trigger
+Supabase project: ovweneaaxdypfopwzwuw
+Uses the existing upstream migrations and Edge Functions through the configured Supabase GitHub integration.
