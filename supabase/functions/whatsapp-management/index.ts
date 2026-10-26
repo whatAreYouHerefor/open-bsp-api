@@ -235,7 +235,14 @@ app.post(
   requireRoles(["member", "admin", "owner"]),
   async (c) => {
     const payload = await c.req.json<SignupPayload>();
-    log.info("Embedded signup payload", payload);
+    // The OAuth authorization code is single-use but still sensitive. Keep it
+    // out of application logs while retaining enough non-secret diagnostics.
+    log.info("Embedded signup request received", {
+      organization_id: payload.organization_id,
+      has_phone_number_id: !!payload.phone_number_id,
+      has_waba_id: !!payload.waba_id,
+      flow_type: payload.flow_type,
+    });
 
     await requireScope(
       c,
@@ -376,7 +383,12 @@ app.post("/whatsapp-management/onboard", async (c) => {
     throw new HTTPException(400, { message: "Missing 'token' body param" });
   }
 
-  log.info("Public onboard payload", body);
+  // Do not write the one-time OAuth code or onboarding link token to logs.
+  log.info("Public onboard request received", {
+    has_phone_number_id: !!body.phone_number_id,
+    has_waba_id: !!body.waba_id,
+    flow_type: body.flow_type,
+  });
 
   const client = createUnsecureClient();
 
@@ -406,7 +418,7 @@ app.post("/whatsapp-management/onboard", async (c) => {
 
   if (reason || !tokenData) {
     log.warn("Onboard token rejected", {
-      token: body.token,
+      has_token: true,
       reason,
       organization_id: tokenData?.organization_id,
     });
@@ -417,7 +429,6 @@ app.post("/whatsapp-management/onboard", async (c) => {
   }
 
   log.info("Onboard token validated", {
-    token: body.token,
     organization_id: tokenData.organization_id,
   });
 
@@ -451,7 +462,6 @@ app.post("/whatsapp-management/onboard", async (c) => {
       .eq("status", "active");
 
     log.info("Onboard completed", {
-      token: body.token,
       organization_id: tokenData.organization_id,
       address: address.address,
     });
