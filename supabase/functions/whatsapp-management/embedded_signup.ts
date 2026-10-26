@@ -149,9 +149,8 @@ async function getPhoneNumber(
 }
 
 /**
- * The number on a WABA, for an Embedded Signup v4 coexistence finish that
- * names only the WABA. The flow onboards one app number, so anything but
- * exactly one is a WABA we cannot read the choice from.
+ * Some signup finishes return the WABA but omit the phone ID. In that case we
+ * can infer the number only when the WABA has exactly one phone number.
  */
 async function getWabaPhoneNumberId(
   business_access_token: string,
@@ -262,7 +261,9 @@ export async function performEmbeddedSignup(
   }
 
   if (
-    !payload.phone_number_id && payload.flow_type !== "existing_phone_number"
+    !payload.phone_number_id &&
+    payload.flow_type !== "existing_phone_number" &&
+    payload.flow_type !== "only_waba"
   ) {
     throw new HTTPException(400, {
       message: "Missing 'phone_number_id' body param!",
