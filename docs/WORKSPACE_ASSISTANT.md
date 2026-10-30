@@ -7,15 +7,13 @@ summaries. A staff member can ask for an on-demand recap in this internal chat.
 
 ## Enable a pilot
 
-1. Review and deploy the API and companion UI pull requests together. Saved
-   internal chat history requires a new private table. The declarative schema
-   and RLS files are prepared in
-   `supabase/schemas/03_models/03-15_workspace_chats.sql` and
-   `supabase/schemas/05_rls/05-15_workspace_chats_rls.sql`. Generate and test a
-   migration with the repository’s local `supabase db diff` workflow before
-   merging. No generated migration is included because this environment has no
-   Docker/Postgres runtime. No production schema has been changed. Keep
-   customer-facing OpenBSP AI agents inactive when Botpress is the responder.
+1. Review and deploy the API and companion UI pull requests together. Private
+   internal history uses migration `20261030221807_workspace_chat_history.sql`.
+   Its SQL comes from the declarative table/RLS files. Eight isolated Postgres
+   behavior checks passed; the connected project migration was applied and a
+   signed-in-role save/update/reopen verification passed inside a rolled-back
+   transaction. Keep customer-facing OpenBSP AI agents inactive when your
+   external automation is the responder.
 2. In Supabase Edge Function secrets, set `WORKSPACE_ASSISTANT_API_KEY` to an
    OpenAI API key and `WORKSPACE_ASSISTANT_MODEL` to a Chat Completions model
    supporting JSON-object responses and `max_completion_tokens`. These are
@@ -82,8 +80,13 @@ Neither model prompts nor chat records are written to logs by this endpoint.
   source snippets are shortened to 400 characters and link to the original
   conversation. Chat contents are not stored in browser localStorage in the app.
 
-Live acceptance testing remains required: apply the generated migration in a
-staging environment, test save/reopen across sessions, attempt cross-user and
-cross-organization reads, revoke membership and verify history access is denied,
-and confirm mobile source/customer panels. Until that is complete, keep the
-feature unmerged and undeployed.
+Release verification: eight isolated database checks cover save/reopen,
+cross-user/cross-tenant reads and inserts, tenant identity immutability, stale
+save rejection, revoked membership and anonymous denial. A transaction on the
+connected project verified authenticated save/update/reopen and was rolled back.
+
+Before broad client rollout, finish live browser tests of cross-session history,
+guide preference, mobile panels, model responses and actual WhatsApp ingestion.
+The model key/configuration and source data are operational prerequisites, not
+provided by merging these changes. Reproduce the isolated database checks with
+`deno run -A tests/workspace_chat_history.mjs` from the API repository root.
