@@ -106,3 +106,8 @@ entrypoint = "./functions/slack-webhook/index.ts"
 verify_jwt = false
 import_map = "./functions/deno.json"
 entrypoint = "./functions/slack-dispatcher/index.ts"
+
+[functions.workspace-assistant]
+verify_jwt = false
+import_map = "./functions/deno.json"
+entrypoint = "./functions/workspace-assistant/index.ts"
